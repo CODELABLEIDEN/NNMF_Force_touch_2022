@@ -9,16 +9,16 @@ arguments
 end
 % assert size row
 if isempty(options.rows) && isempty(options.erp_data)
-    options.rows = ceil(size(basis,1)/options.layout_columns);
+    options.rows = ceil(size(basis,2)/options.layout_columns);
 elseif ~isempty(options.erp_data)
-    options.rows = ceil(size(basis,1)/options.layout_columns) * 2;
+    options.rows = ceil(size(basis,2)/options.layout_columns) * 2;
 end
 
 figure;
 tiledlayout(options.rows, options.layout_columns)
-for pp =1:size(basis,1)
+for pp =1:size(basis,2)
     nexttile;
-    plot(time_range,basis{pp,chan})
+    plot(time_range,basis{chan,pp})
     xline(0);
     title(sprintf('Sub: %d',pp))
     if ~isempty(options.erp_data)

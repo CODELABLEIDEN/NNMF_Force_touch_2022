@@ -34,7 +34,7 @@ function [files_grouped,A,parfor_time] = call_f_all_p_parallel_f(path,f, options
 arguments
     path char;
     f ; % function_handle or cell array of function handles
-    options.start_idx (1,1) double = 1; % inclusive 
+    options.start_idx (1,1) double = 1; % inclusive
     options.end_idx (1,1) double = 0; % inclusive
     options.epoch_window_ms (1,2) double = [-2000 2000];
     options.epoch_window_baseline (1,2) double = [-2000 -1500];
@@ -54,31 +54,35 @@ end
 %%
 A = {};
 tic
-parfor i=1:length(files_grouped)
+for i=1:length(files_grouped)
     % file selection
     all_set_files = load(sprintf('%s/status_2.mat',folder{i}));
     all_set_files = all_set_files.all_set_files;
     eeg_name = load(sprintf('%s/status.mat',folder{i}));
     eeg_name = eeg_name.eeg_name;
     % select participants with EEG, Phone data. If curfew participants only select the first file
-    [selected_1] = select_from_status_1(eeg_name)
+    [selected_1] = select_from_status_1(eeg_name);
     % add the .set behind the processed filename to get the file name
     selected_1 = cellfun(@(s) strcat(s, '.set'),selected_1,'UniformOutput',false);
     % select participants where there is BS data and alignment were successful
-    [selected_2] = select_from_status_2(all_set_files);
+    %     [selected_2] = select_from_status_2(all_set_files);
     % select participants where all above criteria are met
-    files_grouped{i} =  intersect(selected_1, selected_2);
+    files_grouped{i} =  selected_1;
     num_files = length(files_grouped{i});
     
     if num_files > 1
+        all_eeg_structs = [];
         for j=1:num_files
             EEG = pop_loadset(sprintf('%s/%s',folder{i}, files_grouped{i}{j}));
             if select_from_EEG_struct_3(EEG) && (size(EEG.Aligned.BS.Data,2) == 2)
-                A{i} = f(EEG, sprintf('%s/%s',folder{i}, files_grouped{i}{1}), options);
+                all_eeg_structs = [all_eeg_structs EEG];
             end
-        end  
+        end
+        % check attys and length issue - make sure forcesensor data present
+        A{i} = f(all_eeg_structs, sprintf('%s/%s',folder{i}, files_grouped{i}{1}), options);  
     elseif num_files
         EEG = pop_loadset(sprintf('%s/%s',folder{i}, files_grouped{i}{1}));
+        % check attys and length issue - make sure forcesensor data present
         if mod(size(EEG.data,2), EEG.pnts) == 0 && ~(EEG.Attys) && (size(EEG.Aligned.BS.Data,2) == 2)
             A{i} = f(EEG, sprintf('%s/%s',folder{i}, files_grouped{i}{1}), options);
         end

@@ -46,7 +46,7 @@ for i=1:length(all_files)
 %             full(:,4) = [];
             load_data = cat(1,load_data,full);
         elseif options.erp_data && ~isempty(tmp)
-            [interp_data] = interp_RW(cat(1,tmp{:}),2,options.split_trials, 'time_range', options.time_range);
+            [interp_data] = interp_RW(cat(1,tmp{:}),options.index,options.split_trials, 'time_range', options.time_range);
             full = cat(1,interp_data);
 %             full(:,7) = [];
             load_data = cat(1,load_data,full);

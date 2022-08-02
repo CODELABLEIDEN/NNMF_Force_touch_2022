@@ -1,4 +1,4 @@
-function [filtered, base,start_indices,mid_indices,end_indices] = preprocess_FS(EEG)
+function [filtered, base,start_indices,mid_indices,end_indices] = preprocess_FS(data)
 %% Preprocess force sensor data and prepare bendsensor data
 %
 % **Usage:** [filtered, BS, base] = preprocess_FS(EEG)
@@ -19,25 +19,25 @@ function [filtered, base,start_indices,mid_indices,end_indices] = preprocess_FS(
 % Author: R.M.D. Kock
 
 %% get force sensor data
-data = EEG.Aligned.BS.Data(:,2);
-% add some padding
-data = [NaN; data; NaN];
-%% remove noise values
-% base is the value when there is no force on the sensor
-% In the raw dataset base is between -1 and -0.8
-% set all the values between this range to -1.
+% data = EEG.Aligned.BS.Data(:,2);
+% % add some padding
+% data = [NaN; data; NaN];
+% %% remove noise values
+% % base is the value when there is no force on the sensor
+% % In the raw dataset base is between -1 and -0.8
+% % set all the values between this range to -1.
 base = -1;
-for i=1:size(data,1)
-    if data(i,1)< -0.8 && data(i+1,1)< -0.8 && data(i-1,1)< -0.8
-        data(i,1) = base;
-    end
-end
-%% Remove nans 
-% OJO
-missing = isnan(data);
-EEG.data = EEG.data(~missing);
-% remove the padding
-data = rmmissing(data);
+% for i=1:size(data,1)
+%     if data(i,1)< -0.8 && data(i+1,1)< -0.8 && data(i-1,1)< -0.8
+%         data(i,1) = base;
+%     end
+% end
+% %% Remove nans 
+% % OJO
+% missing = isnan(data);
+% EEG.data = EEG.data(~missing);
+% % remove the padding
+% data = rmmissing(data);
 %% find peaks that are not noise
 
 [pulse_width,initcros,finalcros] = pulsewidth(data);
@@ -60,4 +60,8 @@ end
 filtered = filtered + base;
 % only select the signals in indices
 filtered(indices) = data(indices);
+
+%remove consecutive zeros
+%signals removed for participants: 5,10,12
+% [BS, filtered] = remove_inactive_bs(BS, filtered, 999);
 end

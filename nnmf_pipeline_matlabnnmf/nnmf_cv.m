@@ -1,9 +1,11 @@
 function [basis, loadings, train_err, test_err] = nnmf_cv(data,options)
 arguments
     data (:,:) {mustBeNonnegative};
-    options.repetitions {mustBePositive} = 100;
+    options.repetitions {mustBePositive} = 3;
     options.n_ranks {mustBePositive} = 10;
     options.split_percent (1,1) double = 0.8;
+    options.replicates (1,1) = 100;
+    options.create_seed logical = 1;
     options.z_score logical = 1;
 end
 
@@ -18,12 +20,12 @@ basis = cell(options.repetitions,options.n_ranks-1);
 loadings = cell(options.repetitions,options.n_ranks-1);
 
 for rep = 1:options.repetitions
-    parfor k = 2:options.n_ranks
+    for k = 2:options.n_ranks
         % create mask
         mask = rand(size(data)) > (1 - options.split_percent);
         masked_nne = data .* mask;
         
-        [W, H] = perform_nnmf(masked_nne, k);
+        [W, H] = perform_nnmf(masked_nne, k, 'replicates', options.replicates, 'create_seed', options.create_seed);
         if options.z_score
             basis{rep,k-1} = zscore(W);
             loadings{rep,k-1} = zscore(H);

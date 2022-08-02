@@ -1,4 +1,4 @@
-function [W,H,D] = perform_nnmf(data, k,options)
+function [W,H] = perform_nnmf(non_neg_data, k)
 %% Perform nmf on ERSP data
 %
 % **Usage:**
@@ -15,28 +15,38 @@ function [W,H,D] = perform_nnmf(data, k,options)
 %  Output(s):
 %   - H = Basis/H contains frequency information shape: channels x k x frequencies x participants
 %   - W = Loadings/W contains time information shape: channels x time x k x participants
-%   - D = Root mean square residual shape: channels x participants
 %
-% Author: Enea Ceolini, R.M.D. Kock
+% Author: 
 %
 
 arguments
-    data {mustBeNonnegative};
+    non_neg_data {mustBeNonnegative};
     k {mustBePositive};
-    options.replicates (1,1) = 100;
-    options.create_seed logical = 1;
 end
 
-if options.create_seed
-    % seeding NMF
-    opt = statset('MaxIter',100);
-    [W0, H0] = nnmf(data, k,'Replicates',options.replicates, 'Options',opt, 'Algorithm','mult');
-    
-    % actual NMF
-    opt = statset('Maxiter',1000);
-    [W, H, D] = nnmf(data, k,'W0',W0,'H0',H0, 'Options',opt, 'Algorithm','als', 'Replicates',options.replicates);
-else
-    opt = statset('Maxiter',1000);
-    [W, H, D] = nnmf(data, k, 'Options',opt, 'Algorithm','als', 'Replicates',options.replicates);
+%% settings NNMF
+lambda = 0;        % sparsity control for the coefficients alpha
+gamma1 = 0;        % sparsity control on the dictionary patterns 
+
+param.mode = 2;
+param.K=k;
+param.lambda=lambda;
+param.numThreads=-1;
+param.batchsize=min(1024,size(non_neg_data,2));
+param.posD = true;   % positive dictionary
+param.iter = 500;  % number of iteration
+param.modeD = 0;
+param.verbose = 0; % print out update information?
+param.posAlpha = 1; % positive coefficients
+param.gamma1 = gamma1; % penalizing parameter on the dictionary patterns
+
+D0 = dictLearnInit(non_neg_data, k);
+param.D = D0;
+
+W = mexTrainDL(non_neg_data, param);
+for kidx = 1:k
+    W(:,kidx) = W(:,kidx)/max(W(:,kidx));
 end
+H = mexLasso(non_neg_data,W,param);
+
 end

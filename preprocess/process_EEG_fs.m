@@ -1,4 +1,4 @@
-function [data] = process_EEG_fs(EEG, participant, options)
+function [data] = process_EEG_fs(EEG_structs, participant, options)
 %% Preprocess EEG data and generate ERP or ERSP
 %
 % **Usage:** [data] = process_EEG(EEG, participant)
@@ -37,10 +37,69 @@ function [data] = process_EEG_fs(EEG, participant, options)
 
 data = {};
 delay_model = 0;
-EEG = gettechnicallycleanEEG(EEG,options.bandpass_upper,options.bandpass_lower);
-[filtered, base,start_indices,mid_indices,end_indices] = preprocess_FS(EEG);
-[EEG] = add_events(EEG,start_indices,length(start_indices),'FS_start');
-[EEG] = add_events(EEG,mid_indices,length(mid_indices),'FS_mid');
+EEG_epoched_start_all = [];
+EEG_epoched_mid_all = [];
+start_indices = [];
+mid_indices = [];
+end_indices = [];
+ind_lengths = [];
+for file=1:length(EEG_structs)
+    EEG = EEG_structs(file);
+    try
+        EEG = gettechnicallycleanEEG(EEG,options.bandpass_upper,options.bandpass_lower);
+    catch ME
+        disp(ME.message)
+        return 
+    end
+    
+    ind_lengths = [ind_lengths length(EEG_structs(file).Aligned.BS.Data(:,2))+1];
+    
+    [FS] = set_base_FS(EEG.Aligned.BS.Data(:,2));
+    [filtered, ~,start_indices_tmp,mid_indices_tmp,end_indices_tmp] = preprocess_FS(FS);
+    [EEG] = add_events(EEG,start_indices_tmp,length(start_indices_tmp),'FS_start');
+    [EEG_epoched_start, start_accept_idxs] = pop_epoch(EEG, {'FS_start'},options.epoch_window_ms/1000);
+    EEG_epoched_start_all = [EEG_epoched_start_all EEG_epoched_start];
+    
+    [EEG] = add_events(EEG,mid_indices_tmp,length(mid_indices_tmp),'FS_mid');
+    [EEG_epoched_mid,mid_accept_idxs] = pop_epoch(EEG, {'FS_mid'},options.epoch_window_ms/1000);
+    EEG_epoched_mid_all = [EEG_epoched_mid_all EEG_epoched_mid];
+    % merge indices
+    if length(EEG_structs)> 1 && file>1
+        start_indices = cat(2,start_indices, start_indices_tmp(start_accept_idxs)+sum(ind_lengths(1:file-1)));
+        mid_indices = cat(2,mid_indices, mid_indices_tmp(mid_accept_idxs)+sum(ind_lengths(1:file-1)));
+        end_indices = cat(2,end_indices, end_indices_tmp(start_accept_idxs)+sum(ind_lengths(1:file-1)));
+    else
+        start_indices = start_indices_tmp(start_accept_idxs);
+        mid_indices = mid_indices_tmp(mid_accept_idxs);
+        end_indices = end_indices_tmp(start_accept_idxs);
+    end
+end
+
+if length(EEG_structs) > 1
+    BS = [];
+    FS = [];
+    for file=1:length(EEG_structs)
+        EEG = EEG_structs(file);
+        BS_tmp = EEG.Aligned.BS.Data(:,1);
+        BS = cat(1, BS, BS_tmp);
+        FS_tmp = EEG.Aligned.BS.Data(:,2);
+        FS_tmp = set_base_FS(FS_tmp);
+        FS = cat(1, FS, FS_tmp);
+
+    end
+    bs_data(:,1) = BS;
+    bs_data(:,2) = FS;
+    
+    EEG_epoched_start = pop_mergeset(EEG_epoched_start_all, [1:length(EEG_epoched_start_all)], 0);
+    EEG_epoched_start.Aligned.BS.Data = bs_data;
+    EEG_epoched_mid = pop_mergeset(EEG_epoched_mid_all, [1:length(EEG_epoched_mid_all)], 0);
+    EEG_epoched_mid.Aligned.BS.Data = bs_data;
+end
+%% get the BS data
+bandpass_upper_range = 10;
+BS_filtered = getcleanedbsdata(EEG_epoched_start.Aligned.BS.Data(:,1),EEG_epoched_start.srate,[1 bandpass_upper_range]);
+% set to same dimension as filtered
+BS_filtered = BS_filtered.';
 % epoch around aligned taps
 % if options.aligned_taps && ~(options.delay)
 %     num_taps = size(find(EEG.Aligned.BS_to_tap.Phone == 1),2);
@@ -62,8 +121,7 @@ EEG = gettechnicallycleanEEG(EEG,options.bandpass_upper,options.bandpass_lower);
 %         error('Selected a participant where model alignment wasnt successful')
 %     end
 % end
-[EEG_epoched_start] = pop_epoch(EEG, {'FS_start'},options.epoch_window_ms/1000);
-[EEG_epoched_mid] = pop_epoch(EEG, {'FS_mid'},options.epoch_window_ms/1000);
+
 %% pre-process
 % ERSP data baseline is removed during the fft analysis
 % if taps are unaligned the true location of baseline is unknown so
@@ -117,6 +175,8 @@ if options.erp_data
         data{10} = end_indices;
         data{11} = idx_rej_trials_start;
         data{12} = idx_rej_trials_mid;
+        data{13} = EEG_epoched_start.Aligned.BS.Data(:,2);
+        data{14} = BS_filtered;
     end
 else
     data = num2cell(zeros(64,6));

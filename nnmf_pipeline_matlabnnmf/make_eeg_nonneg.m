@@ -36,5 +36,4 @@ else
         non_neg_data = data+ shift_by;
     end
 end
-non_neg_data = double(non_neg_data);
 end
