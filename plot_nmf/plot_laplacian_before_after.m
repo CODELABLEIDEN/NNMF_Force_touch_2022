@@ -28,6 +28,12 @@ end
 sgtitle('Start FS')
 % mid
 % sgtitle('Mid FS')
+%%
+x = zeros(64, 4000, 25);
+for i=1:size(fs1s,1)
+    x(:,:,i) = fs1s{i,3};
+end
+erp = trimmean(x, 20,3);
 %% 
 figure;
 range_time = [1:size(erp,2)];

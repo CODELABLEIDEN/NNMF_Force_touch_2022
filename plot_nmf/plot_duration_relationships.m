@@ -88,5 +88,6 @@ figure
 plot([-2000:1999],mean(all_erps(:,idxs(sorted > 10 & sorted < 200)),2));
 hold on
 plot([-2000:1999],mean(all_erps(:,idxs(sorted >= 300)),2));
-legend({'Duration < 200', 'Durations > 300'})
+legend({sprintf('Duration < 200 n=%d',length(idxs(sorted > 10 & sorted < 200))), sprintf('Durations > 300 n=%d',length(idxs(sorted >= 300)))})
 xline(300)
+title('ERP ch 16')

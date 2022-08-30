@@ -35,7 +35,14 @@ fsersp = load_checkpoints_fs('/media/Storage/User_Specific_Data_Storage/ruchella
 load('/media/Storage/User_Specific_Data_Storage/ruchella/EEGsynclib_Mar_2022//erp_fs4s3/fs_loaded.mat')
 %% nnmf erp
 erp_ersp_data = fs1s(11,4);
-[basis_all,loadings_all,train_err_all,test_err_all] = fs_nnmf(erp_ersp_data,EEG);
+[basis_all,loadings_all,train_err_all,test_err_all] = main_fs_nnmf_cv(erp_ersp_data,EEG);
+%%
+% load('/home/ruchella/variable_activation/nnmf_pipeline/res/preparation/test_err_all.mat')
+save_path = '/home/ruchella/variable_activation/nnmf_pipeline';
+erp_ersp_data = fs1s(11:12,4);
+preparation =1;
+[basis_all, loadings_all] = main_fs_nnmf(erp_ersp_data, EEG, preparation, 'repetitions', 10, 'save_path', save_path);
+
 %% run nnmf
 [basis, loadings, best_k_overall,test_err_reshap,train_err_reshap] = run_nnmf_n_cluster(fs1s(:,7));
 %%
@@ -64,8 +71,8 @@ time_range = [-2000:1999];
 run_n =3;
 %%
 % plot clusters FS
-plot_clusters(basis,cluster_res,best_k_overall,best_k_overall,chan,time_range, 'start_row',1, 'end_row', 5)
-savefig(sprintf('fs_k%d_r%d_e%d_all_clus',best_k_overall,run_n,chan))
+plot_clusters(basis_all_pps',cluster_res,best_k_overall,best_k_overall,chan,time_range, 'start_row',1, 'end_row', 5)
+% savefig(sprintf('fs_k%d_r%d_e%d_all_clus',best_k_overall,run_n,chan))
 % plot_clusters(basis(8:68,:)',cluster_res,kclus,best_k_overall,chan,time_range, 'start_row',6, 'end_row', 10)
 %% plot 1 pp erp FS
 % plot nmf results all participants

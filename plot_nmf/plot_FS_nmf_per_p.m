@@ -1,4 +1,4 @@
-function [trials_diffs] = plot_FS_nmf_per_p(basis,loadings,erp_data,k,time_range,chan,pp, options)
+function  plot_FS_nmf_per_p(basis,loadings,erp_data,k,time_range,chan,pp, options)
 arguments 
     basis;
     loadings;
@@ -7,54 +7,63 @@ arguments
     time_range;
     chan (1,1);
     pp (1,1) ;
+    options.start (1,1) logical = 1;
     options.plot_erp (1,1) logical = 0;
-    options.rows (1,1) = k;
-    options.start (1,1) = 1;
+    options.rows_k (1,1) = k;
+    options.start_k (1,1) = 1;
 end
 %% plot nmf per participant
 figure;
-if options.rows > 5
-    options.rows = 5;
+if options.rows_k > 5
+    options.rows_k = 5;
+end
+
+if options.start
+    erp_idx_trials = 4;
+    erp_idx = 2;
+else
+    erp_idx_trials = 7;
+    erp_idx = 3;
 end
 
 if options.plot_erp
-    tiledlayout(options.rows,3+1)
+    tiledlayout(options.rows_k,3+1)
 else
-    tiledlayout(options.rows,3)
+    tiledlayout(options.rows_k,3)
 end
-for r=options.start:options.rows
-    %plot 1
+for r=options.start_k:options.rows_k
+    %plot 1 : basis for each rank
     nexttile
-    plot(time_range, basis{chan,pp}(:,r))
+    plot(time_range, basis(:,r))
     xlabel('Latency from event (ms)')
     box off;
-    [~,idx] = sort(loadings{chan,pp}(r,:), 'descend');
     xline(0)
-    %plot 2
+    
+    %plot 2: Plot erp all trials
+    [~,idx] = sort(loadings(r,:), 'descend');
     nexttile
-    imagesc(time_range,[],zscore(squeeze(erp_data{pp,7}(chan,:,idx))',[],2));
+    imagesc(time_range,[],zscore(squeeze(erp_data{pp,erp_idx_trials}(chan,time_range+2000,idx))',[],2));
     ylabel('Trials')
     xlabel('Latency from event (ms)')
     box off;
     colorbar
     xline(0)
     title(sprintf('Rank: %d',r))
-    %plot 3
+    
+    %plot 3 durations per trials
     nexttile
-    trials_diffs = erp_data{pp,10}-erp_data{pp,8};
-    trials_diffs(erp_data{pp,12}) = NaN;
-    trials_diffs = rmmissing(trials_diffs);
-    imagesc(trials_diffs(idx)')
+    [durations] = calculate_fs_durations(erp_data,pp);
+    imagesc(durations(idx)')
     title('Duration per trial')
     ylabel('Trials')
     set(gca, 'XTick', [])
     colorbar
     box off;
+    % plot erp average
     if options.plot_erp
-        % plot erp
         nexttile
         if r == ceil(k/2)
-            plot(time_range,erp_data{pp,2}(chan,:))
+            plot(time_range,erp_data{pp,erp_idx}(chan,:))
         else
             set(gca, 'visible', 'off')
         end
@@ -62,7 +71,4 @@ for r=options.start:options.rows
     end
 end
 sgtitle(sprintf('Subject: %d - Electrode: %d',pp, chan))
-% if options.rows >= 5
-%     plot_FS_nmf_per_p(basis,loadings,erp_data,k,time_range,chan,pp, 'start',options.rows)
-% end
 end

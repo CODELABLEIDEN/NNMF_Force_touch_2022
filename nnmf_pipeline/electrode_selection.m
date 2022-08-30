@@ -1,4 +1,4 @@
-function [elecs,selection] = right_hem_elecs(EEG, plot)
+function [elecs,selection] = electrode_selection(EEG, plot,sensorimotor)
 %% Select the left hemisphere possible sensorimotor area electrodes
 %
 % **Usage:** [elecs,selection] = right_hem_elecs(EEG, plot)
@@ -15,17 +15,26 @@ function [elecs,selection] = right_hem_elecs(EEG, plot)
 % 
 
 elecs = 1:64;
-
 Y = round([EEG.Orignalchanlocs.Y],4);
-sel_right = Y>=0;
-
 X = round([EEG.Orignalchanlocs.X],4);
-sel_motor = X<0.8 & X>-0.8;
-
 Z = round([EEG.Orignalchanlocs.Z],4);
-sel_top = Z>-0.3;
 
-selection = sel_motor & sel_right & sel_top;
+if sensorimotor
+    sel_right = Y>=0;
+    sel_motor = X<0.8 & X>-0.8;
+    sel_top = Z>-0.3;
+    
+    selection = sel_motor & sel_top & sel_right;
+else
+    % 3 rings;
+%     sel_motor = X<1 & X>-1;
+%     sel_top = Z>0.1;
+    % 2 rings
+    sel_motor = X<0.8 & X>-0.8;
+    sel_top = Z>0.4;
+    
+    selection = sel_motor & sel_top;
+end
 
 if plot
     figure; topoplot(selection, EEG.chanlocs, 'style', 'blank', 'whitebk', 'on', 'electrodes', 'off')

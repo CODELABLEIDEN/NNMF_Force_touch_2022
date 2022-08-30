@@ -54,7 +54,7 @@ end
 %%
 A = {};
 tic
-for i=1:length(files_grouped)
+parfor i=1:length(files_grouped)
     % file selection
     all_set_files = load(sprintf('%s/status_2.mat',folder{i}));
     all_set_files = all_set_files.all_set_files;
