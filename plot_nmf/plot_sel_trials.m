@@ -36,10 +36,11 @@ for r=1:k
     n_trials = size(sorted_trials,3);
     sel_trials = ceil(n_trials*options.percentage/100);
     nexttile([2,1])
-%     plot(time_range, zscore(squeeze(sorted_trials(:,:,1:sel_trials))), 'Color', [0, 0, 0, 0.1])
+%     plot(time_range, squeeze(sorted_trials(:,:,1:sel_trials)), 'Color', [0, 0, 0, 0.1])
 %     hold on
 %     plot(time_range, zscore(trimmean(squeeze(sorted_trials(:,:,1:sel_trials)),20,2)), 'Color', [1, 0, 0])
 %     plot(time_range, zscore(basis(:,r)), 'Color',  '#7E2F8E', 'LineWidth', 3);
+    hold on
     
     plot(time_range,trimmean(squeeze(sorted_trials(:,:,1:sel_trials)),20,2), 'Color', [1, 0, 0])
     yyaxis right

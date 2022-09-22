@@ -18,7 +18,6 @@ for pp=1:size(basis_all,2)
     count = count+n_ranks;
 end
 %% choose optimal k
-
 % elbow method
 nClusters=10; % pick/set number of clusters your going to use
 totSum=zeros(nClusters-1,1);  % preallocate the result

@@ -8,7 +8,7 @@ end
 if options.type
     n_features = size(features,2);
     model = cell(n_features,1);
-    pvals = zeros(n_features+1,1);
+    pvals = zeros(n_features,1);
     for feat=1:n_features
         design_matrix = [full(sorted_rank)];
         model{feat} = limo_glm(features(:,feat), design_matrix', 0, 0, 0, 'IRLS', 'TIME');
@@ -16,13 +16,19 @@ if options.type
     end
 else
     n_features = size(features,2);
-    model = cell(n_features+1,1);
-    pvals = zeros(n_features+1,1);
-    for feat=1:n_features
-        design_matrix = [features(:,feat), ones(size(features(:,feat)))];
-        model{feat} = limo_glm(full(sorted_rank)', design_matrix, 0, 0, 0, 'IRLS', 'TIME');
+    model = cell(n_features,1);
+    residuals = cell(n_features,1);
+    pvals = zeros(n_features,1);
+    for feat=1:n_features-1
+        design_matrix = [features(:,feat)];
+%         model{feat} = limo_glm(full(sorted_rank)', design_matrix, 0, 0, 0, 'IRLS', 'TIME');
+    mod = fitlm(design_matrix,full(sorted_rank)', 'RobustOpts', 'bisquare');
+    model{feat} = mod.Coefficients.Estimate(2,1);
+    residuals{feat} = mod.Residuals.Raw;
     end
-    design_matrix = [features, ones(size(features(:,feat)))];
-    model{n_features+1} = limo_glm(full(sorted_rank)', design_matrix, 0, 0, 0, 'IRLS', 'TIME');
-    pvals(n_features+1) = model{n_features+1}.p;
+    design_matrix = [features(:,1:4)];
+    mod = fitlm(design_matrix,full(sorted_rank)', 'RobustOpts', 'bisquare');
+    model{n_features} = mod.Coefficients.Estimate(2,1);
+    residuals{n_features} = mod.Residuals.Raw;
+%     plot_residuals(residuals)
 end

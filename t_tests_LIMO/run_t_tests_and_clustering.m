@@ -94,9 +94,11 @@ LIMO.dir = pwd();
 %% run analysis
 % run paired samples t-test
 if paired
-    LIMO_path = limo_random_robust(3, data1, data2, 1, LIMO);
-%     [mask, cluster_p] = run_clustering(LIMO_path, options.significance_threshold, options.channeighbstructmat, tf, paired);
-% run one sample t-test
+    LIMO_path = limo_random_robust(1, data1, 1, LIMO);
+    [mask, cluster_p] = run_clustering(LIMO_path, options.significance_threshold, options.channeighbstructmat, tf, 0);
+    save('mask.mat','mask')
+    save('cluster_p.mat','cluster_p')
+    % run one sample t-test
 else
     LIMO_path = limo_random_robust(1, data1, 1, LIMO);
     load('one_sample_ttest_parameter_1.mat')
@@ -106,8 +108,7 @@ else
 %     [mask, cluster_p] = run_clustering(LIMO_path, options.significance_threshold, options.channeighbstructmat, tf, paired);
 end
 %% save results of clustering and rename
-% save('mask.mat','mask')
-% save('cluster_p.mat','cluster_p')
+
 rename_add_suffix(LIMO_path, unique_name)
 % return to previous directory
 cd('../')

@@ -1,7 +1,12 @@
 % get data
-for pp=5
+durations_all = [];
+force_all = [];
+areas_all = [];
+areas_short_all = [];
+for pp=1:25
     erp_ersp_data = fs1s{pp,4};
-    [W, H] = stable_nnmf(basis_all,loadings_all, pp);
+    W = stable_basis{pp};
+    H = full(stable_loadings{pp});
     %%
     k = size(W,2);
     if preparation
@@ -20,7 +25,11 @@ for pp=5
 %     [durations] = calculate_fs_durations(fs1s,pp);
     [trial_times] = trial_idx(H,fs1s,k,time_range,chan,pp);
     [stats, durations, force, areas, areas_short, idx] = behavior_stats(H,fs1s,trial_times,r,pp);
-    
+    durations_all = [durations_all; durations'];
+    force_all = [force_all; force'];
+    areas_all = [areas_all; areas];
+    areas_short_all = [areas_short_all; areas_short];
+    corrplot(durations,areas,force,areas_short)
     %%
 %     plot_FS_nmf_per_p(W,H,fs1s,k,time_range,chan,pp);
 %     plot_sel_trials(W,H,fs1s,k,time_range,chan,pp, 'percentage', percentage, 'order', 'descend');

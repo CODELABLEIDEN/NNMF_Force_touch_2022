@@ -54,10 +54,8 @@ else
     P = squeeze(one_sample(:, :, 5));
     % F values under h0
     bootM = squeeze(H0_one_sample(:,:,1,:)) .^ 2;
-    bootM = reshape(bootM, [1, size(bootM)]);
     % P values under h0
     bootP = squeeze(H0_one_sample(:,:,2,:));
-    bootP = reshape(bootP, [1, size(bootP)]);
     [mask,cluster_p] = limo_cluster_correction(M,P,bootM,bootP,channeighbstructmat,2,significance_threshold);
 end
 end
