@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Methods &#8212; Non attribute movement and EEG 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Startup guide" href="getting-started.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="getting-started.html" title="Startup guide"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Non attribute movement and EEG 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Methods</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="methods">
+<h1>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h1>
+<p>This code analyzes the trial-by-trial differences of event-related potentials (measured with EEG) surrounding thumb movements. The user was instructed to press with their right thumb on a forcesensor, measuring the force of the touch. The touches took place within a 5 seconds interval. Behavioral features (namely force, duration, inter-touch-interval, area) of the touches were extracted to determine whether the trial-by-trial differences could be explained by them. Towards reducing the high-dimensional EEG data, non-negative matrix factorization (NNMF) was used, creating a low-rank approximation of the event-related potentials.</p>
+<div class="section" id="pre-processing-forcesensor">
+<h2>Pre-processing Forcesensor<a class="headerlink" href="#pre-processing-forcesensor" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>No force in the FS data was shown as values ranging from -0.8 to -1. As no pressure is always the same, all these values were transformed into one common value which is -1. Then the signals were shifted upwards by a value of 1, setting the ‘no-force’ starting point at 0.</p></li>
+<li><p>Sampling rate of the FS was 1000 Hz.</p></li>
+<li><p>Missing values were set to 0.</p></li>
+<li><p>The timing (start and end times) of the touches were identified using the ‘pulsewidth’ function</p></li>
+<li><p>Fast spikes smaller than 5 ms were considered noise as these spikes are too fast to be real movements and were thus set to 0.</p></li>
+</ol>
+</div></blockquote>
+<p>27 participants were measured after pre-processing 25 participants remained.</p>
+</div>
+<div class="section" id="pre-processing-eeg">
+<h2>Pre-processing EEG<a class="headerlink" href="#pre-processing-eeg" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Loaded the EEG struct and included participants that met the following criterias:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Had EEG data</p></li>
+<li><p>Had predictions from the forcensensor data</p></li>
+<li><p>If the participant was a curfew participant, we only included the first measurement file</p></li>
+<li><p>Attys is false</p></li>
+<li><p>Measurement did not contain a saving error</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Cleaned the EEG data by running gettechnicallcleanEEG</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Removed blinks according to ICA</p></li>
+<li><p>Interpolated missing channels</p></li>
+<li><p>Re-referenced data to the average channel</p></li>
+<li><p>Highpass filter up to 45 Hz</p></li>
+<li><p>Lowpass filter from 0.5 Hz</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>Epoched EEG data around the start of the forcesensor touches (Epoch window [-2000 2000] ms)</p></li>
+<li><p>Merged EEG structs per participant</p></li>
+<li><p>Removed baseline [-2000 -1500]</p></li>
+<li><p>Thresholded trials in the range -80 to 80 mV</p></li>
+<li><p>Repeated steps 3 to 6 for EEG data surrounding the middle of the forcesensor touches.</p></li>
+<li><p>Saved:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Participant folder name</p></li>
+<li><p>Trimmed mean ERP surrounding the start of the touch removing edge 20% of trials (channel x time)</p></li>
+<li><p>Mean ERP for surrounding the start of the touch (channel x time)</p></li>
+<li><p>Epoched EEG data (channel x time x trials)</p></li>
+<li><p>Trimmed mean ERP surrounding middle of touch removing edge 20% of trials (channel x time)</p></li>
+<li><p>Mean ERP for surrounding middle of touch(channel x time)</p></li>
+<li><p>Epoched EEG data (channel x time x trials)</p></li>
+<li><p>Forcesensor touches start indices</p></li>
+<li><p>Forcesensor touches middle indices</p></li>
+<li><p>Forcesensor touches end indices</p></li>
+<li><p>Indices of rejected trials through thresholding for epoched data surrounding the start of the touch</p></li>
+<li><p>Indices of rejected trials through thresholding for epoched data surrounding the middle of the touch</p></li>
+<li><p>Preprocessed forcesensor data</p></li>
+<li><p>Filtered bendsensor data</p></li>
+</ul>
+</div></blockquote>
+<p>9. The rest of the analysis was performed for the preparation of the movement which was chosen as the time range [-500:100] ms.
+This window was selected by</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The data was generated in checkpoints of 2 participants. The data had to be merged before use.</p>
+</div>
+</div>
+<div class="section" id="electrode-selection">
+<h2>Electrode selection<a class="headerlink" href="#electrode-selection" title="Permalink to this headline">¶</a></h2>
+<p>As we were interested in studying the thumb movements, the rest of the analysis was conducted with one selected electrode located near the sensorimotor cortex. The following steps were performed for the selection:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Constrain the 64 electrodes to electrodes near the parietal lobe in the left hemisphere (see figure)</p></li>
+<li><p>Perform the surface Laplacian technique – as it reduces spatial noise and it helps identify potential sources of the signal</p></li>
+<li><p>Calculate the median over the whole preparation ERP signal for every electrode</p></li>
+<li><p>Select the electrode with the most negative ERP (since we expect preparation for movement to be a negative signal)</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="cross-validation-for-non-negative-matrix-factorization-nnmf">
+<h2>Cross-validation for Non-negative matrix factorization (NNMF)<a class="headerlink" href="#cross-validation-for-non-negative-matrix-factorization-nnmf" title="Permalink to this headline">¶</a></h2>
+<p>To select the best number of ranks per participant cross-validation was used. The following steps were performed for each participant:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>The ERP data was shifted by the minimum voltage per channel.</p></li>
+<li><p>We randomly removed 20% of the data points (masking)</p></li>
+<li><p>Performed NNMF 100 times with randomly initialized values. Every repetition resulted in 2 matrices. The first matrix summarizes the time domain of the event-related potentials (meta-ERP, Shape: [time x rank]). The second matrix (meta-trials) summarizes the likelihood that the trial is represented by the meta-ERP (Shape: [rank x trials]).</p></li>
+<li><p>Z normalized each meta-trial and meta-ERP</p></li>
+<li><p>Reconstructed the data and calculated the training and testing error for each repetition</p></li>
+<li><p>Repeated steps 2 to 6 for rank [2 to 10]</p></li>
+<li><p>Selected the best rank by averaging the test error across all the repetitions for each rank and selecting the rank with the smallest error.</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="reproducible-non-negative-matrix-factorization-nnmf">
+<h2>Reproducible Non-negative matrix factorization (NNMF)<a class="headerlink" href="#reproducible-non-negative-matrix-factorization-nnmf" title="Permalink to this headline">¶</a></h2>
+<p>Since NNMF is a non-convex problem, the solution is dependent on the initialization. Therefore we employed the reproducible NNMF technique as explained in (<span class="xref std std-ref">https://doi.org/10.1101/2022.08.25.505261</span>). We repeated the above mentioned steps 1 to 4, with the exception that NNMF was performed for 1000 repetitions with the selected rank. Followed by the reproducible NNMF technique selecting the most stable and reproducible decompositions per participant.</p>
+</div>
+<div class="section" id="clustering-nnmf-decompositions">
+<h2>Clustering NNMF decompositions<a class="headerlink" href="#clustering-nnmf-decompositions" title="Permalink to this headline">¶</a></h2>
+<p>To compare meta-ERPs across participants we used k-means clustering.</p>
+<div class="section" id="selecting-the-optimal-number-of-clusters">
+<h3>Selecting the optimal number of clusters<a class="headerlink" href="#selecting-the-optimal-number-of-clusters" title="Permalink to this headline">¶</a></h3>
+<p>To select the optimal number of clusters for k-means the silhouette method was used for 1 to 10 clusters. Silhouette methods selects the optimal number of clusters based on the squared Euclidean distance between the resulting clusters. This was repeated 1000 times and the most commonly selected number of clusters was chosen. In this case, it was 7 clusters.</p>
+</div>
+<div class="section" id="stable-k-means">
+<h3>Stable k-means<a class="headerlink" href="#stable-k-means" title="Permalink to this headline">¶</a></h3>
+<p>As the solution for k-means is not unique we want to select the most stable clusters. Towards this, we repeated k-means, with the optimal number of clusters, 1000 times. For each repetition, the sum of squared distance was calculated. Finally, the repetition with the smallest sum of squared distance was selected.</p>
+</div>
+<div class="section" id="verifying-reproducibility-of-stable-k-means">
+<h3>Verifying reproducibility of stable k-means<a class="headerlink" href="#verifying-reproducibility-of-stable-k-means" title="Permalink to this headline">¶</a></h3>
+<p>The procedure for stable k-means was repeated 50 times. Through cross-correlation the clusters were compared. The final selected clusters were stable every repetition.</p>
+</div>
+</div>
+<div class="section" id="behavioral-features-extraction-and-pre-processing">
+<h2>Behavioral features extraction and pre-processing<a class="headerlink" href="#behavioral-features-extraction-and-pre-processing" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>The selected behavioral features are:</dt><dd><ul class="simple">
+<li><p>Force - The maximum force within the first 5 ms of the start indexes is selected.</p></li>
+<li><p>Area - The forcesensor is filtered with a lowpass filter of range 0.05 (see section identifying noise in the forcesensor). Then the area is calculated using the trapezoidal rule.</p></li>
+<li><p>Duration - The duration is the distance between the start and end indexes identified with ‘pulsewidth’</p></li>
+<li><p>Inter-touch-interval - The distance to the next touch</p></li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="identifying-noise-in-the-forcesensor">
+<h3>Identifying noise in the forcesensor<a class="headerlink" href="#identifying-noise-in-the-forcesensor" title="Permalink to this headline">¶</a></h3>
+<p>The forcesensor had some measurement noise (values oscilating between -1 and -0.8 when no force is exerted). This noise is likely still present when the forcesensor is being pressed. To remove this, we selected the sequences when no force is exerted and performed FFT to identify the frequencies within the noise. The most common frequencies were below 0.05. Thus the lowpass filter was used on the whole forcesensor signal with a cutoff of 0.05.</p>
+</div>
+</div>
+<div class="section" id="behavioral-features-regression-hierarchical-generalized-linear-model-glm">
+<h2>Behavioral features regression (Hierarchical Generalized linear model (GLM))<a class="headerlink" href="#behavioral-features-regression-hierarchical-generalized-linear-model-glm" title="Permalink to this headline">¶</a></h2>
+<p>A robust regression model was fit (using bisquare weights) with each behavioral feature as independent variable and the meta-trials as dependent variable (level 1). Then one-sample t-test was conducted over the beta coefficients for each cluster (level 2, shape 1 x features x # participants in cluster). We performed the regression for 4 different features on the same meta-trails, so to correct for multiple comparisons we use Bonferroni correction p &lt; 0.05/4).</p>
+</div>
+<div class="section" id="trials-thresholding">
+<h2>Trials thresholding<a class="headerlink" href="#trials-thresholding" title="Permalink to this headline">¶</a></h2>
+<p>For each given rank, the meta-trials give an indication of how similar the actual EEG trial was to the meta-erp. Sorting the meta-trials allows us to see the most similar/dissimilar trials. Plotting this values made it apparent that the most dissimilar trials (low meta-trial value) were different from the meta-erp. To test using a data-driven approach we sorted the meta-trials, then calculated the correlation between the trimmed mean over the most similar 10% of trials and the meta-erp. Then the percentage was incremented by 10 and the same steps were repeated. We repeated these calculations for every participant and ranks. The correlation between the meta-trial and the average ERP decreased as the percentage increased.</p>
+<p>The final threshold was selected between a tradeoff with the correlation values and the number of trials included. 30% still selected about 150 trials and had a relatively high correlation value.</p>
+</div>
+<div class="section" id="hierarchical-generalized-linear-model-glm-with-meta-trials">
+<h2>Hierarchical Generalized linear model (GLM) with meta-trials<a class="headerlink" href="#hierarchical-generalized-linear-model-glm-with-meta-trials" title="Permalink to this headline">¶</a></h2>
+<p>Level 1:
+An iterative reweighted least squares regression was performed to test for a relationship at all time points and electrodes with the NNMF meta-trials.</p>
+<p>Level 2:
+Subsequently, a one-sample t-test for the beta coefficients across participants in the same cluster was performed. Here we were testing whether, over the participants that process the touches similarly, their EEG activity from any timepoint or electrode was correlated to the meta-trials.</p>
+<p>This analysis was also repeated after thresholding the number of trials by 30%.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Methods</a><ul>
+<li><a class="reference internal" href="#pre-processing-forcesensor">Pre-processing Forcesensor</a></li>
+<li><a class="reference internal" href="#pre-processing-eeg">Pre-processing EEG</a></li>
+<li><a class="reference internal" href="#electrode-selection">Electrode selection</a></li>
+<li><a class="reference internal" href="#cross-validation-for-non-negative-matrix-factorization-nnmf">Cross-validation for Non-negative matrix factorization (NNMF)</a></li>
+<li><a class="reference internal" href="#reproducible-non-negative-matrix-factorization-nnmf">Reproducible Non-negative matrix factorization (NNMF)</a></li>
+<li><a class="reference internal" href="#clustering-nnmf-decompositions">Clustering NNMF decompositions</a><ul>
+<li><a class="reference internal" href="#selecting-the-optimal-number-of-clusters">Selecting the optimal number of clusters</a></li>
+<li><a class="reference internal" href="#stable-k-means">Stable k-means</a></li>
+<li><a class="reference internal" href="#verifying-reproducibility-of-stable-k-means">Verifying reproducibility of stable k-means</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#behavioral-features-extraction-and-pre-processing">Behavioral features extraction and pre-processing</a><ul>
+<li><a class="reference internal" href="#identifying-noise-in-the-forcesensor">Identifying noise in the forcesensor</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#behavioral-features-regression-hierarchical-generalized-linear-model-glm">Behavioral features regression (Hierarchical Generalized linear model (GLM))</a></li>
+<li><a class="reference internal" href="#trials-thresholding">Trials thresholding</a></li>
+<li><a class="reference internal" href="#hierarchical-generalized-linear-model-glm-with-meta-trials">Hierarchical Generalized linear model (GLM) with meta-trials</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="getting-started.html"
+                        title="previous chapter">Startup guide</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/analysis.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="getting-started.html" title="Startup guide"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Non attribute movement and EEG 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Methods</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright .
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

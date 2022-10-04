@@ -77,17 +77,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/non_attribute_movement_and_EEG.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/variable_activation.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/non_attribute_movement_and_EEG.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/variable_activation.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/non_attribute_movement_and_EEG"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/non_attribute_movement_and_EEG"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/variable_activation"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/variable_activation"
 	@echo "# devhelp"
 
 epub:
