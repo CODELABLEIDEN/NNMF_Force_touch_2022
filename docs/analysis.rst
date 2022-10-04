@@ -90,4 +90,48 @@ Since NNMF is a non-convex problem, the solution is dependent on the initializat
 
 Clustering NNMF decompositions
 ------------------------------
-To compare across participants
+To compare meta-ERPs across participants we used k-means clustering.
+
+Selecting the optimal number of clusters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To select the optimal number of clusters for k-means the silhouette method was used for 1 to 10 clusters. Silhouette methods selects the optimal number of clusters based on the squared Euclidean distance between the resulting clusters. This was repeated 1000 times and the most commonly selected number of clusters was chosen. In this case, it was 7 clusters.
+
+Stable k-means
+^^^^^^^^^^^^^^
+As the solution for k-means is not unique we want to select the most stable clusters. Towards this, we repeated k-means, with the optimal number of clusters, 1000 times. For each repetition, the sum of squared distance was calculated. Finally, the repetition with the smallest sum of squared distance was selected.
+
+Verifying reproducibility of stable k-means
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The procedure for stable k-means was repeated 50 times. Through cross-correlation the clusters were compared. The final selected clusters were stable every repetition.
+
+Behavioral features extraction and pre-processing
+-------------------------------------------------
+The selected behavioral features are:
+ - Force - The maximum force within the first 5 ms of the start indexes is selected.
+ - Area - The forcesensor is filtered with a lowpass filter of range 0.05 (see section identifying noise in the forcesensor). Then the area is calculated using the trapezoidal rule.
+ - Duration - The duration is the distance between the start and end indexes identified with 'pulsewidth'
+ - Inter-touch-interval - The distance to the next touch
+
+Identifying noise in the forcesensor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The forcesensor had some measurement noise (values oscilating between -1 and -0.8 when no force is exerted). This noise is likely still present when the forcesensor is being pressed. To remove this, we selected the sequences when no force is exerted and performed FFT to identify the frequencies within the noise. The most common frequencies were below 0.05. Thus the lowpass filter was used on the whole forcesensor signal with a cutoff of 0.05.
+
+Behavioral features regression (Hierarchical Generalized linear model (GLM))
+-----------------------------------------------------------------------------
+A robust regression model was fit (using bisquare weights) with each behavioral feature as independent variable and the meta-trials as dependent variable (level 1). Then one-sample t-test was conducted over the beta coefficients for each cluster (level 2, shape 1 x features x # participants in cluster). We performed the regression for 4 different features on the same meta-trails, so to correct for multiple comparisons we use Bonferroni correction p < 0.05/4).
+
+Trials thresholding
+-------------------
+For each given rank, the meta-trials give an indication of how similar the actual EEG trial was to the meta-erp. Sorting the meta-trials allows us to see the most similar/dissimilar trials. Plotting this values made it apparent that the most dissimilar trials (low meta-trial value) were different from the meta-erp. To test using a data-driven approach we sorted the meta-trials, then calculated the correlation between the trimmed mean over the most similar 10% of trials and the meta-erp. Then the percentage was incremented by 10 and the same steps were repeated. We repeated these calculations for every participant and ranks. The correlation between the meta-trial and the average ERP decreased as the percentage increased.
+
+The final threshold was selected between a tradeoff with the correlation values and the number of trials included. 30% still selected about 150 trials and had a relatively high correlation value.
+
+Hierarchical Generalized linear model (GLM) with meta-trials
+------------------------------------------------------------
+Level 1:
+An iterative reweighted least squares regression was performed to test for a relationship at all time points and electrodes with the NNMF meta-trials.
+
+Level 2:
+Subsequently, a one-sample t-test for the beta coefficients across participants in the same cluster was performed. Here we were testing whether, over the participants that process the touches similarly, their EEG activity from any timepoint or electrode was correlated to the meta-trials.
+
+This analysis was also repeated after thresholding the number of trials by 30%.
