@@ -23,15 +23,15 @@ function [mask, cluster_p] = run_clustering(LIMO_paths, significance_threshold, 
 %%
 split_path = split(LIMO_paths, '/');
 event = split_path{end};
-if paired
-    load(sprintf('%s/paired_samples_ttest_parameter_1.mat',LIMO_paths));
-    load(sprintf('%s/H0/H0_paired_samples_ttest_parameter_1',LIMO_paths));
-    one_sample = paired_samples;
-    H0_one_sample = H0_paired_samples;
-else
+% if paired
+%     load(sprintf('%s/paired_samples_ttest_parameter_1.mat',LIMO_paths));
+%     load(sprintf('%s/H0/H0_paired_samples_ttest_parameter_1',LIMO_paths));
+%     one_sample = paired_samples;
+%     H0_one_sample = H0_paired_samples;
+% else
     load(sprintf('%s/one_sample_ttest_parameter_1.mat',LIMO_paths));
     load(sprintf('%s/H0/H0_one_sample_ttest_parameter_1',LIMO_paths));
-end
+% end
 if tf
     time_range = 200;
 %     time_range = 60;
@@ -52,11 +52,21 @@ else
     M = squeeze(one_sample(:, :, 4)) .^ 2;
     % P values
     P = squeeze(one_sample(:, :, 5));
-    % F values under h0
+    if paired
+            % F values under h0
     bootM = squeeze(H0_one_sample(:,:,1,:)) .^ 2;
     % P values under h0
     bootP = squeeze(H0_one_sample(:,:,2,:));
     [mask,cluster_p] = limo_cluster_correction(M,P,bootM,bootP,channeighbstructmat,2,significance_threshold);
+    else
+    % F values under h0
+    bootM = squeeze(H0_one_sample(:,:,1,:)) .^ 2;
+    bootM = reshape(bootM, [1, size(bootM)]);
+    % P values under h0
+    bootP = squeeze(H0_one_sample(:,:,2,:));
+    bootP = reshape(bootP, [1, size(bootP)]);
+    [mask,cluster_p] = limo_cluster_correction(M,P,bootM,bootP,channeighbstructmat,1,significance_threshold);
+    end
 end
 end
 

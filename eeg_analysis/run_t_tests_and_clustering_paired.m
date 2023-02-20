@@ -1,4 +1,4 @@
-function [LIMO_path] = run_t_tests_and_clustering(unique_name, paired, tf, data1, data2, options)
+function [LIMO_paths] = run_t_tests_and_clustering_paired(unique_name, paired, tf, data1, data2, options)
 %% Creates a placeholder cell with the datasets of all participants for plotting of results
 %
 % **Usage:** [erp_data, ams, nams] = preprocess_erp_data(erp_data, paired, min_num_trials)
@@ -11,7 +11,7 @@ function [LIMO_path] = run_t_tests_and_clustering(unique_name, paired, tf, data1
 %   - data2 (optional only required if paired is 1) = data for paired samples t test
 %   - significance_threshold (name value argument default : 0.05) = threshold for bootstrap significance testing
 %   - bootstrap (name value argument default : 1000) = number of bootstraps to perform
-%   - channeighbstructmat (name value argument default will load the file if present on path) = struct with information on what electrodes are neighbors with each other 
+%   - channeighbstructmat (name value argument default will load the file if present on path) = struct with information on what electrodes are neighbors with each other
 %   - expected_chanlocs (name value argument default will load the file if present on path) = struct expected channel locations
 %
 % Output(s):
@@ -41,7 +41,7 @@ if isempty(options.channeighbstructmat)
         else
             options.channeighbstructmat = channeighbstructmat(1:62,1:62);
         end
-
+        
     catch
         disp('Provide channeighbstructmat as name value pair argument or add file to path')
         return
@@ -92,23 +92,33 @@ LIMO.dir = pwd();
 
 %% run analysis
 % run paired samples t-test
-if paired
-    LIMO_path = limo_random_robust(1, data1, 1, LIMO);
-    [mask, cluster_p] = run_clustering(LIMO_path, options.significance_threshold, options.channeighbstructmat, tf, paired);
-    save('mask.mat','mask')
-    save('cluster_p.mat','cluster_p')
-    % run one sample t-test
-else
-    LIMO_path = limo_random_robust(1, data1, 1, LIMO);
-    load('one_sample_ttest_parameter_1.mat')
-    P = squeeze(one_sample(:, :, 5));
-    one_sample(:, :, 6) = P < (options.significance_threshold/length(P));
-    save('one_sample_ttest_parameter_1.mat', 'one_sample')
-%     [mask, cluster_p] = run_clustering(LIMO_path, options.significance_threshold, options.channeighbstructmat, tf, paired);
-end
+LIMO_paths = limo_random_robust(3, data1, data2, 1, LIMO);
+%%
+split_path = split(LIMO_paths, '/');
+event = split_path{end};
+significance_threshold = 0.05;
+load(sprintf('%s/paired_samples_ttest_parameter_1.mat',LIMO_paths));
+load(sprintf('%s/H0/H0_paired_samples_ttest_parameter_1',LIMO_paths));
+one_sample = paired_samples;
+H0_one_sample = H0_paired_samples;
+
+% F values
+M = squeeze(one_sample(:, :, 4)) .^ 2;
+% P values
+P = squeeze(one_sample(:, :, 5));
+
+% F values under h0
+bootM = squeeze(H0_one_sample(:,:,1,:)) .^ 2;
+% P values under h0
+bootP = squeeze(H0_one_sample(:,:,2,:));
+[mask,cluster_p] = limo_cluster_correction(M,P,bootM,bootP,options.channeighbstructmat,2,significance_threshold);
+
+save('mask.mat','mask')
+save('cluster_p.mat','cluster_p')
+% run one sample t-test
 %% save results of clustering and rename
 
-rename_add_suffix(LIMO_path, unique_name)
+rename_add_suffix(LIMO_paths, unique_name)
 % return to previous directory
 cd('../')
 end

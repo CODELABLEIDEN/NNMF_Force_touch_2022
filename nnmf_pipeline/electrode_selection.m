@@ -1,4 +1,4 @@
-function [elecs,selection] = electrode_selection(EEG, plot,sensorimotor)
+function [elecs,selection,h] = electrode_selection(EEG, plot,sensorimotor)
 %% Select the left hemisphere possible sensorimotor area electrodes
 %
 % **Usage:** [elecs,selection] = right_hem_elecs(EEG, plot)
@@ -37,7 +37,7 @@ else
 end
 
 if plot
-    figure; topoplot(selection, EEG.chanlocs, 'style', 'blank', 'whitebk', 'on', 'electrodes', 'off')
+    h = figure; topoplot(selection, EEG.chanlocs, 'style', 'blank', 'whitebk', 'on', 'electrodes', 'off', 'colormap', 'jet')
 end
 
 elecs = elecs(selection);
